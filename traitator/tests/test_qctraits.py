@@ -17,6 +17,25 @@ def _find_nan_rows(table: pd.DataFrame, cols: [str]) -> pd.DataFrame:
     return pd.concat(errors)
 
 
+def _find_padded_rows(table: pd.DataFrame, cols: [str]) -> pd.DataFrame:
+    _cols_check(table, cols)
+
+    _filter = None
+    for col in cols:
+        err = table[col].apply(lambda x: x != x.strip())
+        if _filter is None:
+            _filter = err
+        else:
+            _filter |= err
+
+    # enclose names in "" to indicate whitespaces
+    errors = table[_filter].copy()
+    for col in cols:
+        errors[col] = errors[col].apply(lambda x: '"%s"' % x)
+
+    return errors
+
+
 class QCTests(TestCase):
     def setUp(self):
         self.fp_guitar = 'traitator/tests/data/trait_data_n10906.csv'
@@ -36,6 +55,11 @@ class QCTests(TestCase):
         self.assertTrue(
             obs.shape[0] == 0,
             msg="all Genus and Species names should be non-emptry:\n%s" % obs)
+
+        obs = _find_padded_rows(tresor, self.cols_binomial)
+        self.assertTrue(
+            obs.shape[0] == 0,
+            msg="you have whitespaces in your names:\n%s" % obs)
 
 
 if __name__ == '__main__':
