@@ -7,35 +7,30 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
-    - name: update apt
-      run: sudo apt-get update
+    - name: Checkout Repo
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
     - name: Install dependencies
-      run: sudo apt-get install python3 python3-pip
-
-    # configure conda
-    - name: Setup for conda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        auto-update-conda: true
-        python-version: 3.9
-    - name: create conda env
       run: |
-        conda config --add channels conda-forge
-        conda config --add channels anaconda
-        conda create -q --yes -n traits_microbiome python=3.9 flake8
-        conda init bash
-        source ~/.bashrc
-        conda activate traits_microbiome
-    - uses: actions/checkout@v2
-
-    - name: codestyle check
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        $CONDA/bin/conda env update --file environment.yml --name base
+    - name: Lint with flake8
       run: |
-        conda init bash
-        source ~/.bashrc
-        conda activate traits_microbiome
-        flake8 *.py
+        $CONDA/bin/flake8 traitator/
+    - name: run python tests
+      run: |
+        $CONDA/bin/nosetests traitator --with-doctest --with-coverage
+    - name: convert coverage
+      run: |
+        $CONDA/bin/coverage lcov
+    # since we for now only check QC of traits no code has to be covered
+    #- name: send coverage report
+    #  uses: coverallsapp/github-action@master
+    #  with:
+    #    github-token: ${{ secrets.GITHUB_TOKEN }}
+    #    path-to-lcov: "coverage.lcov"
