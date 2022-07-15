@@ -6,9 +6,10 @@ def _cols_check(table: pd.DataFrame, cols: [str]):
     assert all([c in table.columns for c in cols]), \
         "some columns in 'cols' are not in your table!"
 
+
 def _find_nan_rows(table: pd.DataFrame, cols: [str]) -> pd.DataFrame:
     _cols_check(table, cols)
-    
+
     errors = []
     for col in cols:
         errors.append(table[~pd.notnull(table[col])])
@@ -34,7 +35,7 @@ class QCTests(TestCase):
         obs = _find_nan_rows(tresor, self.cols_binomial)
         self.assertTrue(
             obs.shape[0] == 0,
-            msg="all Genus and Species names shoul be non-emptry:\n%s" % obs)
+            msg="all Genus and Species names should be non-emptry:\n%s" % obs)
 
 
 if __name__ == '__main__':
