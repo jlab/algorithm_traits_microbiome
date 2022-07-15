@@ -24,11 +24,12 @@ jobs:
         $CONDA/bin/flake8 traitator/
     - name: run python tests
       run: |
-        $CONDA/bin/nosetests traitator --with-doctest --with-coverage
-    - name: convert coverage
-      run: |
-        $CONDA/bin/coverage lcov
+        $CONDA/bin/nosetests traitator --with-doctest
     # since we for now only check QC of traits no code has to be covered
+    #    $CONDA/bin/nosetests traitator --with-doctest --with-coverage
+    #- name: convert coverage
+    #  run: |
+    #    $CONDA/bin/coverage lcov
     #- name: send coverage report
     #  uses: coverallsapp/github-action@master
     #  with:
