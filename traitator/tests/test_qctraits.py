@@ -36,6 +36,20 @@ def _find_padded_rows(table: pd.DataFrame, cols: [str]) -> pd.DataFrame:
     return errors
 
 
+def _find_multiword_rows(table: pd.DataFrame, cols: [str]) -> pd.DataFrame:
+    _cols_check(table, cols)
+
+    _filter = None
+    for col in cols:
+        err = table[col].apply(lambda x: len(x.split()) > 1)
+        if _filter is None:
+            _filter = err
+        else:
+            _filter |= err
+
+    return table[_filter]
+
+
 class QCTests(TestCase):
     def setUp(self):
         self.fp_guitar = 'traitator/tests/data/trait_data_n10906.csv'
@@ -51,15 +65,24 @@ class QCTests(TestCase):
         # test dimension of data
         self.assertEqual(tresor.shape, (370479, 5))
 
+        # ensure all Genus/Species are not np.nan
         obs = _find_nan_rows(tresor, self.cols_binomial)
         self.assertTrue(
             obs.shape[0] == 0,
             msg="all Genus and Species names should be non-emptry:\n%s" % obs)
 
+        # ensure all Genus/Species names have no leading or trailing
+        # whitespaces
         obs = _find_padded_rows(tresor, self.cols_binomial)
         self.assertTrue(
             obs.shape[0] == 0,
             msg="you have whitespaces in your names:\n%s" % obs)
+
+        # ensure Genus/Species names are exactly one word
+        obs = _find_multiword_rows(tresor, self.cols_binomial)
+        self.assertTrue(
+            obs.shape[0] == 0,
+            msg="Genus or Species consists of more than one word!:\n%s" % obs)
 
 
 if __name__ == '__main__':
