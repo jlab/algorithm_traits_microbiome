@@ -27,7 +27,7 @@ class QCTests(TestCase):
         pass
 
     def test_qctresor(self):
-        tresor = pd.read_csv(self.fp_tresor, sep="\t")
+        tresor = pd.read_csv(self.fp_tresor, sep=",")
 
         # test dimension of data
         self.assertEqual(tresor.shape, (370479, 5))
