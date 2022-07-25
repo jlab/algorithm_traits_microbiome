@@ -20,7 +20,7 @@ def _find_nan_rows(table: pd.DataFrame, cols: [str]) -> pd.DataFrame:
 class QCTests(TestCase):
     def setUp(self):
         self.fp_guitar = 'traitator/tests/data/trait_data_n10906.csv'
-        self.fp_tresor = 'data/traitdata_tresor.csv'
+        self.fp_tresor = 'data/Traits_v2.csv'
         self.cols_binomial = ['Genus', 'Species']
 
     def tearDown(self):
