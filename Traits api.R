@@ -1,3 +1,4 @@
+# Traits Rscripts from John Guittar - Modifications done by Guiraud Tresor
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 ## OPTION 1 - USING THE R-PACKAGE BACDIVE
 #+++++++++++++++ BACDIVE API WEB SERVICE +++++++++++++++++++++++++++++++++#
