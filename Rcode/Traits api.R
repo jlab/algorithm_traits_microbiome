@@ -619,6 +619,18 @@ x <- x %>%
   filter(!(is.na(Genus) | Genus == 'unclassified')) %>%
   filter(!(is.na(Species) | Species == 'unclassified'))
 
+# headers from the LTP fasta file using command line
+#grep ">" LTPs132_SSU_compressed.fasta | cut -f 6,7 > LTP_headers
+
+# trying to find out which species exist both,
+# in my trait table as in the LTP
+x <- x %>% 
+  mutate(Organism = paste0(Genus," ",Species))
+LTP_headers <- read.delim("C:/Users/Anwender/Downloads/LTP_headers", header=FALSE)
+
+# match ltp to trait table by common genus and species name
+z <- merge(x,LTP_headers, by.x = 'Organism',by.y = 'V1')
+
 #remove taxa not present in the Living tree Project or the Silva-derived taxonomy file from our usearch pipeline
 tmp <- bind_rows(select(tax_succ, Genus, Species), select(tax_LTP, Genus, Species)) %>%
   filter(!(Genus == 'unclassified' | Species == 'unclassified'))
