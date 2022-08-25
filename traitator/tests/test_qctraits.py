@@ -30,7 +30,7 @@ class QCTests(TestCase):
         tresor = pd.read_csv(self.fp_tresor, sep="\t")
 
         # test dimension of data
-        self.assertEqual(tresor.shape, (428699, 5))
+        self.assertEqual(tresor.shape, (370479, 5))
 
         obs = _find_nan_rows(tresor, self.cols_binomial)
         self.assertTrue(
