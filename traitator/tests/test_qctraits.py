@@ -37,6 +37,11 @@ class QCTests(TestCase):
             obs.shape[0] == 0,
             msg="all Genus and Species names should be non-emptry:\n%s" % obs)
 
+    def test_specialchars(self):
+        with open(self.fp_tresor, "r") as f:
+            for line in f.readlines():
+                self.assertTrue('<' not in line,
+                    msg='line "%s" contains "<" char!' % line)
 
 if __name__ == '__main__':
     main()
