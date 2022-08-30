@@ -84,6 +84,12 @@ class QCTests(TestCase):
             obs.shape[0] == 0,
             msg="Genus or Species consists of more than one word!:\n%s" % obs)
 
+        self.assertTrue(
+            any(map(lambda x: 'GW2011' in x,
+                    tresor[
+                        tresor['Genus'] == 'archaeon']['Species'].unique())),
+            "Species name of Genus 'archaeon' should contain GW2011")
+
 
 if __name__ == '__main__':
     main()
