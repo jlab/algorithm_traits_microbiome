@@ -37,11 +37,62 @@ class QCTests(TestCase):
             obs.shape[0] == 0,
             msg="all Genus and Species names should be non-emptry:\n%s" % obs)
 
+<<<<<<< HEAD
     def test_specialchars(self):
         with open(self.fp_tresor, "r") as f:
             for line in f.readlines():
                 self.assertTrue('<' not in line,
                     msg='line "%s" contains "<" char!' % line)
+=======
+        # ensure all Genus/Species names have no leading or trailing
+        # whitespaces
+        obs = _find_padded_rows(tresor, self.cols_binomial)
+        self.assertTrue(
+            obs.shape[0] == 0,
+            msg="you have whitespaces in your names:\n%s" % obs)
+
+        # ensure Genus/Species names are exactly one word
+        obs = _find_multiword_rows(tresor, self.cols_binomial)
+        self.assertTrue(
+            obs.shape[0] == 0,
+            msg="Genus or Species consists of more than one word!:\n%s" % obs)
+
+        self.assertTrue(
+            any(map(lambda x: 'GW2011' in x,
+                    tresor[
+                        tresor['Genus'] == 'archaeon']['Species'].unique())),
+            "Species name of Genus 'archaeon' should contain GW2011")
+
+        # test critical name resolution
+        for (genus, species) in [
+                ('Anaerosalibacter', 'Anaerosalibacter sp.'),
+                ('Aphanizomenon', 'flos-aquae'),
+                ('Bacillus', 'safensis'),
+                ('Brevundimonas', 'Brevundimonas sp.'),
+                ('Dolichospermum', 'flos-aquae'),
+                ('Finegoldia', 'Finegoldia sp.'),
+                ('Halomonas', 'denitrificans'),
+                ('Methanothermobacter', 'Methanothermobacter sp.'),
+                ('Mucilaginibacter rigui', 'rigui'),
+                ('Mycobacterium gordonae', 'paragordonae'),
+                ('Oscillatoria', 'nigro-viridis'),
+                ('Paulownia', 'witches-broom'),
+                ('Plasticicumulans', 'lactativoran'),
+                ('Pseudoclavibacter', 'Pseudoclavibacter sp.'),
+                ('Ruania', 'albidiflava'),
+                ('Selenomonas', 'Selenomonas sp.'),
+                ('Sphingobacterium', 'composti'),
+                ('Thalassospira', 'A40-3'),
+                ('Thermovibrio', 'ammonificans'),
+                ('archaeon', 'GW2011_AR10'),
+                ('archaeon', 'GW2011_AR20'),
+                ('haloarchaeon', '3A1-DGR'),
+                ('olei', 'IMMIBHF-1T')]:
+            self.AssertTrue(
+                tresor[(tresor['Genus'] == genus) &
+                       (tresor['Species'] == species)].shape[0] > 0)
+
+>>>>>>> 1f388b9 (adding test for critical names)
 
 if __name__ == '__main__':
     main()
