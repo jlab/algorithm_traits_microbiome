@@ -90,6 +90,35 @@ class QCTests(TestCase):
                         tresor['Genus'] == 'archaeon']['Species'].unique())),
             "Species name of Genus 'archaeon' should contain GW2011")
 
+        # test critical name resolution
+        for (genus, species) in [
+                ('Anaerosalibacter', 'Anaerosalibacter sp.'),
+                ('Aphanizomenon', 'flos-aquae'),
+                ('Bacillus', 'safensis'),
+                ('Brevundimonas', 'Brevundimonas sp.'),
+                ('Dolichospermum', 'flos-aquae'),
+                ('Finegoldia', 'Finegoldia sp.'),
+                ('Halomonas', 'denitrificans'),
+                ('Methanothermobacter', 'Methanothermobacter sp.'),
+                ('Mucilaginibacter rigui', 'rigui'),
+                ('Mycobacterium gordonae', 'paragordonae'),
+                ('Oscillatoria', 'nigro-viridis'),
+                ('Paulownia', 'witches-broom'),
+                ('Plasticicumulans', 'lactativoran'),
+                ('Pseudoclavibacter', 'Pseudoclavibacter sp.'),
+                ('Ruania', 'albidiflava'),
+                ('Selenomonas', 'Selenomonas sp.'),
+                ('Sphingobacterium', 'composti'),
+                ('Thalassospira', 'A40-3'),
+                ('Thermovibrio', 'ammonificans'),
+                ('archaeon', 'GW2011_AR10'),
+                ('archaeon', 'GW2011_AR20'),
+                ('haloarchaeon', '3A1-DGR'),
+                ('olei', 'IMMIBHF-1T')]:
+            self.AssertTrue(
+                tresor[(tresor['Genus'] == genus) &
+                       (tresor['Species'] == species)].shape[0] > 0)
+
 
 if __name__ == '__main__':
     main()
