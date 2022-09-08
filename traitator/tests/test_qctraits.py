@@ -37,13 +37,13 @@ class QCTests(TestCase):
             obs.shape[0] == 0,
             msg="all Genus and Species names should be non-emptry:\n%s" % obs)
 
-<<<<<<< HEAD
+
     def test_specialchars(self):
         with open(self.fp_tresor, "r") as f:
             for line in f.readlines():
                 self.assertTrue('<' not in line,
                     msg='line "%s" contains "<" char!' % line)
-=======
+
         # ensure all Genus/Species names have no leading or trailing
         # whitespaces
         obs = _find_padded_rows(tresor, self.cols_binomial)
@@ -92,7 +92,7 @@ class QCTests(TestCase):
                 tresor[(tresor['Genus'] == genus) &
                        (tresor['Species'] == species)].shape[0] > 0)
 
->>>>>>> 1f388b9 (adding test for critical names)
+
 
 if __name__ == '__main__':
     main()
