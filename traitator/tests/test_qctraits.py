@@ -41,7 +41,8 @@ class QCTests(TestCase):
         with open(self.fp_tresor, "r") as f:
             for line in f.readlines():
                 self.assertTrue('<' not in line,
-                    msg='line "%s" contains "<" char!' % line)
+                                msg='line "%s" contains "<" char!' % line)
+
 
 if __name__ == '__main__':
     main()
