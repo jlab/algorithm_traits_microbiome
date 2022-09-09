@@ -30,13 +30,18 @@ class QCTests(TestCase):
         tresor = pd.read_csv(self.fp_tresor, sep="\t")
 
         # test dimension of data
-        self.assertEqual(tresor.shape, (370479, 5))
+        self.assertEqual(tresor.shape, (359767, 5))
 
         obs = _find_nan_rows(tresor, self.cols_binomial)
         self.assertTrue(
             obs.shape[0] == 0,
             msg="all Genus and Species names should be non-emptry:\n%s" % obs)
 
+    def test_specialchars(self):
+        with open(self.fp_tresor, "r") as f:
+            for line in f.readlines():
+                self.assertTrue('<' not in line,
+                    msg='line "%s" contains "<" char!' % line)
 
 if __name__ == '__main__':
     main()
