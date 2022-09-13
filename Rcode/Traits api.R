@@ -4,11 +4,12 @@
 #+
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 ## AIM: COMPARE MY ACTUAL TAXA DATAFRAME WITH ALL TAXA IN BACDIVE;
-## IF ANY NEWLY ADDED SPECIE ,NA,SORT IT OUT;
+## IF ANY NEWLY ADDED SPECIE,SORT IT OUT;
 ## AT THE END CREATE A NEW DATABASE WITH ALL SPECIES.
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 ## Call up all strain-type Species in BACDIVE
+#https://bacdive.dsmz.de/advsearch - here we can download all 89,546 strains as a csv file
 library(readxl)
 advsearch_bacdive_2022_06_02 <- read_excel("C:/Users/Bew/Dropbox/PC/Downloads/advsearch_bacdive_2022-06-02.xlsx")
 #View(advsearch_bacdive_2022_06_02)
@@ -24,7 +25,6 @@ new_taxa_bacdive <- as.data.frame(new_taxa_bacdive)
 #+++++++++++++++++++++++ RECONSTRUCTING TRAIT TABLE +++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #
-#curated_trait_data <- readRDS("curated_trait_data.rds")
 curated_trait_data <- read.csv("C:/Users/Anwender/Downloads/curated_trait_data.csv")
 
 # build search string 
@@ -46,7 +46,9 @@ source("C:/Users/Anwender/Documents/bacdive_custom_func.R") # run custom func sc
 # ID_list <- list()
 
 # Sending inquiries to bacdive - request func
-# The extraction of the bacdive ids was done in 2 runs.
+# The extraction of the bacDive IDs was done in 2 runs.
+# The BacDive IDs is indispensable to retrieve traits info
+# Run-time about 1.5 to 2 hours
 t1 <- Sys.time()
 #ID_list <- list()
 for(taxon in search_taxon[1277:10906,3]){
@@ -61,6 +63,7 @@ bacid <- t(as.data.frame(ID_list))
 rownames(bacid) <- NULL
 
 ##++++++++++++++++++++ Extracting the traits from Bacdive ++++++++++++++++++++#
+# run-time is about an hour or less
 t3 <- Sys.time()
 traits_tbl <-lapply(bacid[1:38611,1],bacdat)
 Traits <- do.call(rbind,traits_tbl)
@@ -76,6 +79,8 @@ Traits <- select(Traits, 12,1,2,3,4,5,6,7,8,9,10,11)
 # clean aggregration score column
 Traits$aggregation_score <- ifelse(Traits$aggregation_score %in% c("aggregates in clumps","aggregates in chains"),
                                    Traits$aggregation_score,NA)
+
+# create a ref list to digitize traits information
 refs <- list(
   Oxygen_tolerance = c('obligate aerobe'      = 5,
                        'aerobe'               = 5,
@@ -96,7 +101,7 @@ refs <- list(
   Aggregation_score = c('aggregates in chains'  = 1,
                         'aggregates in clumps' = 1)
 )
-
+# Digitalization of traits - Matching the ref with the extracted traitdata table 
 Traits <- Traits %>%
   mutate_all(funs(ifelse(. == '', NA, .))) %>%
   mutate(
@@ -157,6 +162,7 @@ bac <- separate(bac, Species, c("Genus","Species"),fill = "left") %>%
 # get Genome size, GC content, and Gene Number from NCBI ftp site.
 # https://ftp.ncbi.nlm.nih.gov/genomes/GENOME_REPORTS/prokaryotes.txt
 # download procaryote traits from link above.
+# cleaning the ncbi db
 
 library(tidyverse)
 library(data.table)
@@ -229,13 +235,13 @@ genos <- bind_rows(genos,genos1,genos2)
 # remove from the Genus column - Candidatus
 genos <- genos %>% mutate(Genus = gsub("Candidatus","",Genus))
 
-#  mutate(sp = ifelse(str_count(sp, "\\S+") > 1, word(sp, 1, 2), sp)) %>%
-#separate(sp, c("Genus", "Species"), " ", fill = 'right')
 ##########################################################################
-#+++++++++++++++++ GOLD DATABASE ++++++++++++++++++++++++++++++++++++++++#
+#+++++++++++++++++ JGI:GOLD DATABASE ++++++++++++++++++++++++++++++++++++#
 ##########################################################################
+#https://gold.jgi.doe.gov/downloads
 library(readxl)
 library(tidyverse)
+
 gold_DB <- read_excel('C:/Users/Anwender/Downloads/gold_DB.xlsx')
 
 # Keep just bacteria and rename column names of DB
@@ -340,6 +346,9 @@ jgi <- gold_DB %>%
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 ##################################################################################
 #+++++++++++++++++++++++++++++++++++++++ IJSEM ++++++++++++++++++++++++++++++++++#
+#First: Edits drawn directly from Barberan et al 2016 script: 
+#https://figshare.com/articles/International_Journal_of_Systematic_and_Evolutionary_Microbiology_IJSEM_phenotypic_database/4272392
+
 #read ijsem table
 ijsem<-read.delim('C:/Users/Anwender/Downloads/IJSEM_pheno_db_v1.0.txt', sep="\t", header=T, check.names=F, fill=T,
                   na.strings=c("NA", "", "Not indicated", " Not indicated","not indicated", "Not Indicated", "n/a", "N/A", "Na", "Not given", "not given","Not given for yeasts", "not indicated, available in the online version", "Not indicated for yeasts", "Not Stated", "Not described for yeasts", "Not determined", "Not determined for yeasts"))
@@ -576,7 +585,8 @@ bvit <- read.csv('C:/Users/Anwender/Documents/microbiome_trait_succession/data/B
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #++++++++++++++ RRNDB (Ribosomal RNA operon copy number DATABASE) +++++++++++++
-
+# extract 16s gene copy numbers from rrnDB
+#https://rrndb.umms.med.umich.edu/static/download/
 rrnDB.5.7 <- read.delim("C:/Users/Anwender/Documents/rrnDB-5.7.tsv") %>% 
   mutate(
     sp = gsub("'|\\[|\\]", "", NCBI.scientific.name),
@@ -647,7 +657,7 @@ x <- x %>% filter(Species!="")
 x <- x[x$Species!="AB1",]
 
 #for plotting comparisons by source
-x_by_source <- x %>%
+x_by_source <- y %>%
   group_by(Genus, Species, source, trait) %>%
   summarise(val = ifelse(trait[1] %in% c('Length','Width'), log(mean(val)), mean(val))) %>%
   spread(trait, val)
@@ -680,20 +690,13 @@ x <- x %>%
                          ifelse(Spore > 0, median(Spore[Spore > 0], na.rm = T), 0), Spore_score)) %>%
   ungroup() %>%
   select(-Spore, -Spore_score)
-
+# reorder column
+x <- x %>% select(18,1:15,19,16:17)
 #remove unclassified and NAs
 x <- x %>%
   filter(!(is.na(Genus) | Genus == 'unclassified')) %>%
   filter(!(is.na(Species) | Species == 'unclassified'))
 
-#remove taxa not present in the Living tree Project or the Silva-derived taxonomy file from our usearch pipeline
-tmp <- bind_rows(select(tax_succ, Genus, Species), select(tax_LTP, Genus, Species)) %>%
-  filter(!(Genus == 'unclassified' | Species == 'unclassified'))
-x <- filter(x, paste(Genus, Species) %in% paste(tmp$Genus, tmp$Species))
-
-###save RDS
-saveRDS(x, file = 'data\\traits_sparse.RDS')
-saveRDS(trait_sources, file = 'data\\trait_sources.RDS')
 #++++++++++++++++++++++
 #+ Import and read tree from LTP
 library(phytools)
@@ -761,10 +764,12 @@ y$val[y$trait %in% d]<-ifelse(!grepl('\\.',y$val[y$trait %in% d]),
 # sort table using genus,species,trait and finally source
 y <- y[order(y$Genus,y$Species,y$trait,y$source),]
 
-# arrange traitdata_tresor specie column
-traitdata_tresor <- separate(traitdata_tresor, Species, c('Genus1','Species'),fill = "left") %>% 
+# Arrange traitdata from traitdata_tresor_update_csv_branch in github
+# Split species column and eliminating rows without either species or genus names
+traitdata_tresor_update_csv_branch <- separate(traitdata_tresor_update_csv_branch, Species, c('Genus1','Species'),fill = "left") %>% 
   select(1,3,4,5,6)
-
+traitdata_tresor_update_csv_branch <- traitdata_tresor_update_csv_branch %>% filter(Species !="")
+traitdata_tresor_update_csv_branch <- traitdata_tresor_update_csv_branch %>% filter(Genus !="")
 # write file in a tsv file
 library(readr)
 write_csv(traitdata_tresor,'C:\\Users\\Anwender\\Downloads\\traitdata_tresor',append = F)
@@ -773,9 +778,11 @@ write_tsv(y,'C:\\Users\\Anwender\\Downloads\\traitdata_tresor_2.tsv',append = F)
 # write in xlsx file
 library(writexl) #export data from R format to Excel format
 write_xlsx(traitdata_tresor, 'C:\\Users\\Anwender\\Downloads\\traitdata_tresor')
-x <- select(x,1,2,3,5,4)
 
-write_tsv(x,'C:\\Users\\Anwender\\Downloads\\traitdata_tresor.tsv',append = F)
+# rearrange column order
+x <- select(x,1,2,3,5,4) 
+
+write_tsv(traitdata_tresor_update_csv_branch,'C:\\Users\\Anwender\\Downloads\\traitdata_tresor.tsv',append = F)
 
 
 
