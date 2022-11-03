@@ -3,35 +3,28 @@
 #+++++++++++++++ BACDIVE API WEB SERVICE +++++++++++++++++++++++++++++++++#
 #+
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-## AIM: COMPARE MY ACTUAL TAXA DATAFRAME WITH ALL TAXA IN BACDIVE;
-## IF ANY NEWLY ADDED SPECIE,SORT IT OUT;
-## AT THE END CREATE A NEW DATABASE WITH ALL SPECIES.
+## AIM: Extract all traits information for 92150 Strains in BacDive
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
+#load packages
+loadpax(c('tidyverse','data.table'))
+
 ## Call up all strain-type Species in BACDIVE
-#https://bacdive.dsmz.de/advsearch - here we can download all 89,546 strains as a csv file
+#https://bacdive.dsmz.de/advsearch - here we can download all 92,150 strains as a csv file
 library(readxl)
-advsearch_bacdive_2022_06_02 <- read_excel("C:/Users/Bew/Dropbox/PC/Downloads/advsearch_bacdive_2022-06-02.xlsx")
-#View(advsearch_bacdive_2022_06_02)
+advsearch_bacdive_2022.09.27 <- read.csv("C:/Users/Anwender/Downloads/advsearch_bacdive_2022-09-27.csv")
 
 ## Rename database
-total_strain_bacdive <- advsearch_bacdive_2022_06_02
+total_strain_bacdive <- advsearch_bacdive_2022.09.27
 
 # compare species column of two databases
-new_taxa_bacdive <- total_strain_bacdive$species[!total_strain_bacdive$species %in% search_taxon$search_string]
-new_taxa_bacdive <- as.data.frame(new_taxa_bacdive)
+#new_taxa_bacdive <- total_strain_bacdive$species[!total_strain_bacdive$species %in% search_taxon$search_string]
+#new_taxa_bacdive <- as.data.frame(new_taxa_bacdive)
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #+++++++++++++++++++++++ RECONSTRUCTING TRAIT TABLE +++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-#
-curated_trait_data <- read.csv("C:/Users/Anwender/Downloads/curated_trait_data.csv")
 
-# build search string 
-search_taxon <- curated_trait_data %>%
-  transmute(GENUS = Genus, SPECIES = Species) %>% 
-  select(GENUS,SPECIES)%>%
-  mutate(search_string = paste0(GENUS ," ",SPECIES))
 
 ## Registration for BacDive is required but free and easy to accomplish.
 ## In real applications username and password could of course also be stored
@@ -40,41 +33,23 @@ search_taxon <- curated_trait_data %>%
 ##+++++++++++++++++++++++++ BACDIVE +++++++++++++++++++++++++++++++++++++#
 ################################################################################
 # Run custom R file to activate bacdive open access object
-source("C:/Users/Anwender/Documents/bacdive_custom_func.R") # run custom func script to activate,
+source("C:/Users/Anwender/OneDrive/Documents/bacdive_custom_func.R") # run custom func script to activate,
                                                             # refresh the bacdive access object.
-# create an empty list for bacID                                                           
-# ID_list <- list()
-
-# Sending inquiries to bacdive - request func
-# The extraction of the bacDive IDs was done in 2 runs.
-# The BacDive IDs is indispensable to retrieve traits info
-# Run-time about 1.5 to 2 hours
-t1 <- Sys.time()
-#ID_list <- list()
-for(taxon in search_taxon[1277:10906,3]){
-  result <- request(bacdive,taxon)
-  ID_list <- append(ID_list,result$results)
-}
-t2<- Sys.time()
-t2-t1
-
-# convert large list of bacdive ids to a dataframe
-bacid <- t(as.data.frame(ID_list))
-rownames(bacid) <- NULL
 
 ##++++++++++++++++++++ Extracting the traits from Bacdive ++++++++++++++++++++#
 # run-time is about an hour or less
-t3 <- Sys.time()
-traits_tbl <-lapply(bacid[1:38611,1],bacdat)
+t1 <- Sys.time()
+traits_tbl <-lapply(total_strain_bacdive[1:92150,1],bacdat)
 Traits <- do.call(rbind,traits_tbl)
-t4 <- Sys.time()
-t4-t3 # Laufzeit des Prozessen
+t2 <- Sys.time()
+t2-t1 # Laufzeit des Prozessen
 
-# Add the bacid dataframe to Trait table
-Traits$ID <- bacid[,1]
 
 # reorder colnames in dataframe
-Traits <- select(Traits, 12,1,2,3,4,5,6,7,8,9,10,11)
+Traits <- select(Traits, 1,2,3,10,11,4,5,7,8,9,6)
+
+# remove unclassified strains
+Traits <- Traits[-c(92028:92150),]
 
 # clean aggregration score column
 Traits$aggregation_score <- ifelse(Traits$aggregation_score %in% c("aggregates in clumps","aggregates in chains"),
@@ -242,7 +217,7 @@ genos <- genos %>% mutate(Genus = gsub("Candidatus","",Genus))
 library(readxl)
 library(tidyverse)
 
-gold_DB <- read_excel('C:/Users/Anwender/Downloads/gold_DB.xlsx')
+gold_DB <- read_excel('C:/Users/Anwender/Downloads/goldData.xlsx', sheet="Organism")
 
 # Keep just bacteria and rename column names of DB
 gold_DB <- gold_DB %>% 
@@ -323,7 +298,7 @@ gold_DB <- gold_DB %>%
     Gram_positive = c(1,0)[match(Gram_positive, c('Gram+','Gram-'))],
     Motility = c(1,1,0,0)[match(Motility, c('Motile','Chemotactic','Non-motile','Nonmotile'))],
     Oxygen_tolerance = c(5,5,4,3,2,1,1)[match(Oxygen_tolerance, 
-                                              c('Obligate aerobe','Aerobe','Microaerophilic','Facultative','Facultative anaerobe','Anaerobe','Obligate anaerobe'))],
+                                              c('Obligate aerobe','Aerobe','Facultative','Microaerophilic','Facultative anaerobe','Anaerobe','Obligate anaerobe'))],
     Spore = c(1,1,0)[match(Spore, c('Non-sporulating','Nonsporulating','Sporulating'))])
 
 #ph optimum
@@ -390,10 +365,11 @@ ijsem$Salt_optimum<-as.character(ijsem$Salt_optimum)
 ijsem$Salt_optimum<-sapply(ijsem$Salt_optimum, simplify=T, function(x){mean(swan(unlist(strsplit(x, split="-", fixed=T))))})
 
 #there are some formatting issues that should be solved
-############## Now my additional edits to the IJSEM data
+############## Now my additional edits to the IJSEM data (Guittar)
 #Assign oxygen score
+# corrected an error in O2 tol score: f.aerobe = 4 and microaerophile = 3
 ijsem$Oxygen_score <- c(5,4,3,2,1)[match(ijsem$Oxygen, 
-                                         c('obligate aerobe','microaerophile','facultative aerobe','facultative anaerobe','anaerobic'))]
+                                         c('obligate aerobe','facultative aerobe','microaerophile','facultative anaerobe','anaerobic'))]
 
 #turn Aggregation into a binary
 ijsem$Aggregation <- c(0,1,1)[match(ijsem$Aggregation, c('none','chain','clump'))]
@@ -657,7 +633,7 @@ x <- x %>% filter(Species!="")
 x <- x[x$Species!="AB1",]
 
 #for plotting comparisons by source
-x_by_source <- y %>%
+x_by_source <- x %>%
   group_by(Genus, Species, source, trait) %>%
   summarise(val = ifelse(trait[1] %in% c('Length','Width'), log(mean(val)), mean(val))) %>%
   spread(trait, val)
@@ -690,36 +666,63 @@ x <- x %>%
                          ifelse(Spore > 0, median(Spore[Spore > 0], na.rm = T), 0), Spore_score)) %>%
   ungroup() %>%
   select(-Spore, -Spore_score)
+
 # reorder column
-x <- x %>% select(18,1:15,19,16:17)
-#remove unclassified and NAs
+x <- x %>% select(1:15,18,16:17)
+
+# remove unclassified and NAs
 x <- x %>%
   filter(!(is.na(Genus) | Genus == 'unclassified')) %>%
   filter(!(is.na(Species) | Species == 'unclassified'))
 
-#++++++++++++++++++++++
-#+ Import and read tree from LTP
-library(phytools)
-library(ape)
-library(maps)
-ltp_tree <- read.newick('C:/Users/Anwender/Downloads/LTPs132_SSU_tree.newick')
+# storing the table x in another object y
+y <- x
+############################+++ LIVING TREE PROJECT (LTP) ++++######################################################
 
 #ltp meta table
 ltp_meta <- read.csv('C:/Users/Anwender/Downloads/LTPs132_SSU.csv',sep = "\t",header = F)
 
 # trying to find out which species exist both,
 # in my trait table as in the LTP
-x <- x %>% 
+y <- x %>% 
   mutate(Organism = paste0(Genus," ",Species))
 
+# read LTP metadata
 LTP_headers <- read.delim("C:/Users/Anwender/Downloads/LTP_headers", header=FALSE)
-# attribute colnames to LTP
+
+# attribute meaningful colnames to LTP
 colnames(LTP_headers)<- c("Species","Family")
-# reorder LTP
+
+# reorder y and LTP
+x <- x %>% arrange(Organism)
 LTP_headers <- LTP_headers %>% arrange(Species)
+
 # match ltp to trait table
-z <- merge(x,LTP_headers, by.x = 'Organism',by.y = 'V1')
-#########################################################
+LTP_tresor <- merge(x,LTP_headers, by.x = 'Organism',by.y = 'Species')
+LTP_tresor <- select(LTP_tresor, 1,20,2:19)
+
+
+#############################################################################################
+############# ARRANGING THE FORMAT OF THE DIFF TRAITS ######################################
+
+# +++ Latest trait version
+# arrange format in val column
+# int col
+c <- c('Oxygen_tolerance','Spore','Gram_positive','Gene_number','Motility','Aggregation_score','Copies_16S','Spore_score','B_vitamins')
+y$val[y$trait %in% c] <- as.integer(y$val[y$trait %in% c])
+# double col
+d <- c('GC_content','Genome_Mb','IgA','Length','pH_optimum','Salt_optimum','Temp_optimum','Width')
+y$val[y$trait %in% d] <- as.double(y$val[y$trait %in% d])
+
+# checking if d vector are all doubles i.e contains atleast one decimal number
+y$val[y$trait %in% d]<-ifelse(!grepl('\\.',y$val[y$trait %in% d]),
+                                                            paste0(y$val[y$trait %in% d],".",0),
+                                                            y$val[y$trait %in% d])
+
+# sort table using genus,species,trait and finally source
+y <- y[order(y$Genus,y$Species,y$trait,y$source),]
+
+
 # ++ First Trait version
 # arrange format in val column
 # int col
@@ -747,42 +750,25 @@ traitdata_tresor$val[traitdata_tresor$trait=="pH_optimum"] <- ifelse(grepl('\\.\
 # sort
 traitdata_tresor <- traitdata_tresor[order(traitdata_tresor$Genus,traitdata_tresor$Species,traitdata_tresor$trait,traitdata_tresor$source),]
 
-# +++ Latest trait version
-# arrange format in val column
-# int col
-c <- c('Oxygen_tolerance','Spore','Gram_positive','Gene_number','Motility','Aggregation_score','Copies_16S','Spore_score','B_vitamins')
-y$val[y$trait %in% c] <- as.integer(y$val[y$trait %in% c])
-# double col
-d <- c('GC_content','Genome_Mb','IgA','Length','pH_optimum','Salt_optimum','Temp_optimum','Width')
-y$val[y$trait %in% d] <- as.double(y$val[y$trait %in% d])
-
-# checking if d vector are all doubles i.e contains atleast one decimal number
-y$val[y$trait %in% d]<-ifelse(!grepl('\\.',y$val[y$trait %in% d]),
-                                                            paste0(y$val[y$trait %in% d],".",0),
-                                                            y$val[y$trait %in% d])
-
-# sort table using genus,species,trait and finally source
-y <- y[order(y$Genus,y$Species,y$trait,y$source),]
-
 # Arrange traitdata from traitdata_tresor_update_csv_branch in github
 # Split species column and eliminating rows without either species or genus names
 traitdata_tresor_update_csv_branch <- separate(traitdata_tresor_update_csv_branch, Species, c('Genus1','Species'),fill = "left") %>% 
   select(1,3,4,5,6)
 traitdata_tresor_update_csv_branch <- traitdata_tresor_update_csv_branch %>% filter(Species !="")
 traitdata_tresor_update_csv_branch <- traitdata_tresor_update_csv_branch %>% filter(Genus !="")
+
 # write file in a tsv file
-library(readr)
 write_csv(traitdata_tresor,'C:\\Users\\Anwender\\Downloads\\traitdata_tresor',append = F)
 write_tsv(y,'C:\\Users\\Anwender\\Downloads\\traitdata_tresor_2.tsv',append = F)
 
 # write in xlsx file
 library(writexl) #export data from R format to Excel format
-write_xlsx(traitdata_tresor, 'C:\\Users\\Anwender\\Downloads\\traitdata_tresor')
+write_xlsx(traitdata_tresor, 'C:\\Users\\Anwender\\Downloads\\traitdata_tresor.xlsx')
 
 # rearrange column order
 x <- select(x,1,2,3,5,4) 
 
-write_tsv(traitdata_tresor_update_csv_branch,'C:\\Users\\Anwender\\Downloads\\traitdata_tresor.tsv',append = F)
+write_tsv(traitdata_tresor,'C:\\Users\\Anwender\\Downloads\\traitdata_tresor.tsv',append = F)
 
 
 
